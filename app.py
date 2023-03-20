@@ -59,28 +59,56 @@ class ListaPessoas(Resource):
         }
         return response
 
+class Atividade(Resource):
+    def get(self, nome):
+        pessoa = Pessoas.query.filter_by(nome=nome).first()
+        atividades = Atividades.query.filter_by(pessoa=pessoa).all()
+        response = [{'id':atividade.id, 'nome':atividade.nome, 'status':atividade.status,'pessoa':atividade.pessoa.nome} for atividade in atividades]
+        return response
+
+class StatusAtividade(Resource):
+    def get(self, id):
+        atividade = Atividades.query.filter_by(id=id).first()
+        response = {
+            'id':atividade.id, 
+            'status':atividade.status
+        }
+        return response
+    
+    def put(self, id):
+        data = request.json
+        atividade = Atividades.query.filter_by(id=id).first()
+        atividade.status = data['status']
+        response = {
+            'id':atividade.id, 
+            'status':atividade.status
+        }
+        return response
+
 class ListaAtividade(Resource):
     def get(self):
         atividades = Atividades.query.all()
-        response = [{'id':atividade.id, 'nome':atividade.nome, 'pessoa':atividade.pessoa.nome} for atividade in atividades]
+        response = [{'id':atividade.id, 'nome':atividade.nome, 'status':atividade.status, 'pessoa':atividade.pessoa.nome} for atividade in atividades]
         return response
     
     def post(self):
         dados = request.json
         pessoa = Pessoas.query.filter_by(nome=dados['pessoa']).first()
-        atividade = Atividades(nome=dados['nome'], pessoa=pessoa)
+        atividade = Atividades(nome=dados['nome'], pessoa=pessoa, status=dados['status'])
         atividade.save()
         response ={
+            'status':atividade.status,
             'pessoa':atividade.pessoa.nome,
             'nome':atividade.nome,
             'id': atividade.id
         }
         return response
             
-
 api.add_resource(Pessoa, '/pessoa/<string:nome>/')
 api.add_resource(ListaPessoas, '/pessoa/')
 api.add_resource(ListaAtividade, '/atividades/')
+api.add_resource(Atividade, '/atividades/<string:nome>/')
+api.add_resource(StatusAtividade, '/atividades/status/<int:id>/')
 
 if __name__== '__main__':
     app.run(debug=True)
